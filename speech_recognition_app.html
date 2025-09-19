@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Speech Recognition Practice</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        
+        .sentence-display {
+            background-color: #e8f4fd;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #3498db;
+        }
+        
+        .sentence-display h3 {
+            margin: 0 0 10px 0;
+            color: #2c3e50;
+        }
+        
+        .target-sentence {
+            font-size: 18px;
+            line-height: 1.5;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+        
+        .controls {
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 0 10px;
+            transition: all 0.3s;
+        }
+        
+        .record-btn {
+            background-color: #e74c3c;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .record-btn:hover {
+            background-color: #c0392b;
+        }
+        
+        .record-btn.recording {
+            background-color: #27ae60;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .next-btn, .prev-btn {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .next-btn:hover, .prev-btn:hover {
+            background-color: #2980b9;
+        }
+        
+        .results {
+            margin: 30px 0;
+            display: none;
+        }
+        
+        .result-section {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        
+        .expected-section {
+            background-color: #f8f9fa;
+            border-left: 4px solid #6c757d;
+        }
+        
+        .recognized-section {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+        }
+        
+        .comparison-section {
+            background-color: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+        }
+        
+        .result-section h4 {
+            margin: 0 0 10px 0;
+            color: #2c3e50;
+        }
+        
+        .text-content {
+            font-size: 16px;
+            line-height: 1.6;
+        }
+        
+        .word {
+            padding: 2px 4px;
+            margin: 1px;
+            border-radius: 3px;
+            display: inline-block;
+        }
+        
+        .word.correct {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .word.incorrect {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .word.missing {
+            background-color: #fff3cd;
+            color: #856404;
+            text-decoration: line-through;
+        }
+        
+        .word.extra {
+            background-color: #e2e3e5;
+            color: #383d41;
+            font-style: italic;
+        }
+        
+        .status {
+            text-align: center;
+            padding: 10px;
+            margin: 20px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        
+        .status.listening {
+            background-color: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+        
+        .sentence-counter {
+            text-align: center;
+            margin: 10px 0;
+            color: #666;
+        }
+        
+        .instructions {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #17a2b8;
+        }
+        
+        .instructions h4 {
+            margin: 0 0 10px 0;
+            color: #2c3e50;
+        }
+        
+        .edit-section {
+            background-color: #fff;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .edit-section h3 {
+            margin: 0 0 15px 0;
+            color: #2c3e50;
+        }
+        
+        .sentence-list {
+            margin: 15px 0;
+        }
+        
+        .sentence-item {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        
+        .sentence-number {
+            font-weight: bold;
+            margin-right: 10px;
+            min-width: 20px;
+            color: #495057;
+        }
+        
+        .sentence-input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+        
+        .delete-btn {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .delete-btn:hover {
+            background-color: #c82333;
+        }
+        
+        .add-sentence-btn {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        
+        .add-sentence-btn:hover {
+            background-color: #218838;
+        }
+        
+        .toggle-edit-btn {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 0;
+        }
+        
+        .toggle-edit-btn:hover {
+            background-color: #5a6268;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎤 Speech Recognition Practice</h1>
+        
+        <div class="instructions">
+            <h4>How to use:</h4>
+            <ul>
+                <li>Read the sentence below out loud</li>
+                <li>Click "Start Recording" and speak clearly</li>
+                <li>Click "Stop Recording" when finished</li>
+                <li>See how well you did with color-coded feedback</li>
+                <li>Use Next/Previous to try different sentences</li>
+                <li>Click "Edit Sentences" to customize the practice sentences</li>
+            </ul>
+        </div>
+        
+        <button class="toggle-edit-btn" onclick="toggleEditMode()" id="toggleEditBtn">📝 Edit Sentences</button>
+        
+        <div class="edit-section" id="editSection" style="display: none;">
+            <h3>Edit Practice Sentences</h3>
+            <p>Modify the sentences below. Changes are saved automatically.</p>
+            <div class="sentence-list" id="sentenceList"></div>
+            <button class="add-sentence-btn" onclick="addNewSentence()">+ Add New Sentence</button>
+        </div>
+        
+        <div class="sentence-counter" id="sentenceCounter">
+            Sentence 1 of 5
+        </div>
+        
+        <div class="sentence-display">
+            <h3>Read this sentence:</h3>
+            <div class="target-sentence" id="targetSentence">
+                The quick brown fox jumps over the lazy dog.
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button class="prev-btn" onclick="previousSentence()">← Previous</button>
+            <button class="record-btn" id="recordBtn" onclick="toggleRecording()">🎤 Start Recording</button>
+            <button class="next-btn" onclick="nextSentence()">Next →</button>
+        </div>
+        
+        <div class="status" id="status" style="display: none;"></div>
+        
+        <div class="results" id="results">
+            <div class="result-section expected-section">
+                <h4>Expected:</h4>
+                <div class="text-content" id="expectedText"></div>
+            </div>
+            
+            <div class="result-section recognized-section">
+                <h4>What you said:</h4>
+                <div class="text-content" id="recognizedText"></div>
+            </div>
+            
+            <div class="result-section comparison-section">
+                <h4>Comparison:</h4>
+                <div class="text-content" id="comparisonText"></div>
+                <div style="margin-top: 10px; font-size: 14px;">
+                    <span class="word correct">✓ Correct</span>
+                    <span class="word incorrect">✗ Different</span>
+                    <span class="word missing">⚬ Missing</span>
+                    <span class="word extra">+ Extra</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample sentences for practice
+        const sentences = [
+            "The quick brown fox jumps over the lazy dog.",
+            "She sells seashells by the seashore.",
+            "How much wood would a woodchuck chuck if a woodchuck could chuck wood?",
+            "Peter Piper picked a peck of pickled peppers.",
+            "The rain in Spain falls mainly on the plain."
+        ];
+        
+        let currentSentenceIndex = 0;
+        let recognition;
+        let isRecording = false;
+        
+        // Check for Web Speech API support
+        if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+            document.getElementById('status').style.display = 'block';
+            document.getElementById('status').className = 'status error';
+            document.getElementById('status').textContent = 'Sorry, your browser does not support speech recognition. Please use Chrome, Safari, or Edge.';
+        } else {
+            initializeSpeechRecognition();
+        }
+        
+        function initializeSpeechRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = 'en-US';
+            recognition.maxAlternatives = 1;
+            
+            recognition.onstart = function() {
+                showStatus('Listening... Speak now!', 'listening');
+            };
+            
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript;
+                processResult(transcript);
+                hideStatus();
+            };
+            
+            recognition.onerror = function(event) {
+                showStatus('Error: ' + event.error, 'error');
+                resetRecordButton();
+            };
+            
+            recognition.onend = function() {
+                resetRecordButton();
+                hideStatus();
+            };
+        }
+        
+        function updateSentenceDisplay() {
+            document.getElementById('targetSentence').textContent = sentences[currentSentenceIndex];
+            document.getElementById('sentenceCounter').textContent = `Sentence ${currentSentenceIndex + 1} of ${sentences.length}`;
+            hideResults();
+        }
+        
+        function toggleEditMode() {
+            const editSection = document.getElementById('editSection');
+            const toggleBtn = document.getElementById('toggleEditBtn');
+            
+            if (editSection.style.display === 'none') {
+                editSection.style.display = 'block';
+                toggleBtn.textContent = '✖️ Close Editor';
+                populateEditList();
+            } else {
+                editSection.style.display = 'none';
+                toggleBtn.textContent = '📝 Edit Sentences';
+                updateSentenceDisplay();
+            }
+        }
+        
+        function populateEditList() {
+            const sentenceList = document.getElementById('sentenceList');
+            sentenceList.innerHTML = '';
+            
+            sentences.forEach((sentence, index) => {
+                const sentenceItem = document.createElement('div');
+                sentenceItem.className = 'sentence-item';
+                
+                sentenceItem.innerHTML = `
+                    <span class="sentence-number">${index + 1}.</span>
+                    <input type="text" class="sentence-input" value="${sentence}" 
+                           onchange="updateSentence(${index}, this.value)">
+                    <button class="delete-btn" onclick="deleteSentence(${index})" 
+                            ${sentences.length <= 1 ? 'disabled' : ''}>Delete</button>
+                `;
+                
+                sentenceList.appendChild(sentenceItem);
+            });
+        }
+        
+        function updateSentence(index, newText) {
+            if (newText.trim()) {
+                sentences[index] = newText.trim();
+                updateSentenceDisplay();
+            }
+        }
+        
+        function deleteSentence(index) {
+            if (sentences.length > 1) {
+                sentences.splice(index, 1);
+                
+                // Adjust current sentence index if necessary
+                if (currentSentenceIndex >= sentences.length) {
+                    currentSentenceIndex = sentences.length - 1;
+                }
+                
+                populateEditList();
+                updateSentenceDisplay();
+            }
+        }
+        
+        function addNewSentence() {
+            sentences.push("Type your new sentence here...");
+            populateEditList();
+        }
+        
+        function toggleRecording() {
+            if (!recognition) return;
+            
+            if (!isRecording) {
+                startRecording();
+            } else {
+                stopRecording();
+            }
+        }
+        
+        function startRecording() {
+            isRecording = true;
+            document.getElementById('recordBtn').textContent = '⏹️ Stop Recording';
+            document.getElementById('recordBtn').className = 'record-btn recording';
+            hideResults();
+            recognition.start();
+        }
+        
+        function stopRecording() {
+            isRecording = false;
+            recognition.stop();
+        }
+        
+        function resetRecordButton() {
+            isRecording = false;
+            document.getElementById('recordBtn').textContent = '🎤 Start Recording';
+            document.getElementById('recordBtn').className = 'record-btn';
+        }
+        
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+        }
+        
+        function hideStatus() {
+            document.getElementById('status').style.display = 'none';
+        }
+        
+        function processResult(transcript) {
+            const expected = sentences[currentSentenceIndex];
+            const recognized = transcript;
+            
+            document.getElementById('expectedText').textContent = expected;
+            document.getElementById('recognizedText').textContent = recognized;
+            
+            const comparison = compareTexts(expected, recognized);
+            document.getElementById('comparisonText').innerHTML = comparison;
+            
+            showResults();
+        }
+        
+        function compareTexts(expected, recognized) {
+            // Simple word-by-word comparison
+            const expectedWords = expected.toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/);
+            const recognizedWords = recognized.toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/);
+            
+            let result = '';
+            const maxLength = Math.max(expectedWords.length, recognizedWords.length);
+            
+            for (let i = 0; i < maxLength; i++) {
+                const expectedWord = expectedWords[i];
+                const recognizedWord = recognizedWords[i];
+                
+                if (expectedWord && recognizedWord) {
+                    if (expectedWord === recognizedWord) {
+                        result += `<span class="word correct">${expectedWord}</span> `;
+                    } else {
+                        result += `<span class="word incorrect">${recognizedWord}</span> `;
+                    }
+                } else if (expectedWord && !recognizedWord) {
+                    result += `<span class="word missing">${expectedWord}</span> `;
+                } else if (!expectedWord && recognizedWord) {
+                    result += `<span class="word extra">${recognizedWord}</span> `;
+                }
+            }
+            
+            return result.trim();
+        }
+        
+        function showResults() {
+            document.getElementById('results').style.display = 'block';
+        }
+        
+        function hideResults() {
+            document.getElementById('results').style.display = 'none';
+        }
+        
+        function nextSentence() {
+            if (currentSentenceIndex < sentences.length - 1) {
+                currentSentenceIndex++;
+                updateSentenceDisplay();
+            }
+        }
+        
+        function previousSentence() {
+            if (currentSentenceIndex > 0) {
+                currentSentenceIndex--;
+                updateSentenceDisplay();
+            }
+        }
+        
+        // Initialize the display
+        updateSentenceDisplay();
+    </script>
+</body>
+</html>
