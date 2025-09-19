@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Volume Indicator for Language Students</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        
+        .container {
+            text-align: center;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        .indicator {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            margin: 20px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            transition: all 0.2s ease;
+            border: 5px solid #ddd;
+        }
+        
+        .red {
+            background-color: #e74c3c;
+            border-color: #c0392b;
+        }
+        
+        .green {
+            background-color: #27ae60;
+            border-color: #229954;
+        }
+        
+        .gray {
+            background-color: #95a5a6;
+            border-color: #7f8c8d;
+            color: #333;
+        }
+        
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+            transition: background-color 0.3s;
+        }
+        
+        .start-btn {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .start-btn:hover {
+            background-color: #2980b9;
+        }
+        
+        .stop-btn {
+            background-color: #e74c3c;
+            color: white;
+        }
+        
+        .stop-btn:hover {
+            background-color: #c0392b;
+        }
+        
+        .controls {
+            margin: 20px 0;
+        }
+        
+        .slider-container {
+            margin: 20px 0;
+        }
+        
+        .slider-container label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        
+        input[type="range"] {
+            width: 200px;
+            margin: 10px;
+        }
+        
+        .threshold-display {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .volume-display {
+            font-size: 18px;
+            margin: 10px 0;
+            color: #333;
+        }
+        
+        .instructions {
+            max-width: 400px;
+            text-align: left;
+            background-color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Volume Indicator</h1>
+        <p>Speak into your microphone to see if you're speaking loud enough!</p>
+        
+        <div class="indicator gray" id="indicator">
+            Click Start
+        </div>
+        
+        <div class="volume-display" id="volumeDisplay">
+            Current Volume: --
+        </div>
+        
+        <div class="controls">
+            <button class="start-btn" id="startBtn" onclick="startListening()">Start</button>
+            <button class="stop-btn" id="stopBtn" onclick="stopListening()" style="display: none;">Stop</button>
+        </div>
+        
+        <div class="slider-container">
+            <label for="threshold">Volume Threshold:</label>
+            <input type="range" id="threshold" min="1" max="100" value="30" oninput="updateThreshold()">
+            <div class="threshold-display" id="thresholdDisplay">Threshold: 30</div>
+        </div>
+        
+        <div class="instructions">
+            <h3>Instructions:</h3>
+            <ul>
+                <li>Click "Start" to begin monitoring</li>
+                <li>Allow microphone access when prompted</li>
+                <li>Speak into your microphone</li>
+                <li>🔴 Red = Too quiet, speak louder!</li>
+                <li>🟢 Green = Perfect volume!</li>
+                <li>Adjust the threshold slider to set the target volume</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        let audioContext;
+        let microphone;
+        let analyser;
+        let dataArray;
+        let animationId;
+        let threshold = 30;
+        
+        const indicator = document.getElementById('indicator');
+        const volumeDisplay = document.getElementById('volumeDisplay');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const thresholdSlider = document.getElementById('threshold');
+        const thresholdDisplay = document.getElementById('thresholdDisplay');
+        
+        async function startListening() {
+            try {
+                // Request microphone access
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                
+                // Create audio context and connect microphone
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                microphone = audioContext.createMediaStreamSource(stream);
+                analyser = audioContext.createAnalyser();
+                
+                // Configure analyser
+                analyser.fftSize = 256;
+                analyser.smoothingTimeConstant = 0.8;
+                
+                // Connect microphone to analyser
+                microphone.connect(analyser);
+                
+                // Create data array for frequency data
+                dataArray = new Uint8Array(analyser.frequencyBinCount);
+                
+                // Update UI
+                startBtn.style.display = 'none';
+                stopBtn.style.display = 'inline-block';
+                indicator.textContent = 'Listening...';
+                
+                // Start monitoring
+                monitorVolume();
+                
+            } catch (error) {
+                alert('Error accessing microphone: ' + error.message);
+                console.error('Microphone error:', error);
+            }
+        }
+        
+        function stopListening() {
+            // Stop monitoring
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+            
+            // Close audio context
+            if (audioContext) {
+                audioContext.close();
+            }
+            
+            // Update UI
+            startBtn.style.display = 'inline-block';
+            stopBtn.style.display = 'none';
+            indicator.className = 'indicator gray';
+            indicator.textContent = 'Click Start';
+            volumeDisplay.textContent = 'Current Volume: --';
+        }
+        
+        function monitorVolume() {
+            // Get frequency data
+            analyser.getByteFrequencyData(dataArray);
+            
+            // Calculate average volume
+            let sum = 0;
+            for (let i = 0; i < dataArray.length; i++) {
+                sum += dataArray[i];
+            }
+            const average = sum / dataArray.length;
+            
+            // Convert to percentage (0-100)
+            const volumePercent = Math.round((average / 255) * 100);
+            
+            // Update volume display
+            volumeDisplay.textContent = `Current Volume: ${volumePercent}`;
+            
+            // Update indicator based on threshold
+            if (volumePercent >= threshold) {
+                indicator.className = 'indicator green';
+                indicator.textContent = 'Great!';
+            } else {
+                indicator.className = 'indicator red';
+                indicator.textContent = 'Louder!';
+            }
+            
+            // Continue monitoring
+            animationId = requestAnimationFrame(monitorVolume);
+        }
+        
+        function updateThreshold() {
+            threshold = parseInt(thresholdSlider.value);
+            thresholdDisplay.textContent = `Threshold: ${threshold}`;
+        }
+    </script>
+</body>
+</html>
