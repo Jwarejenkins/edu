@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alphabet Typing Practice</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            text-align: center;
+            max-width: 600px;
+            width: 90%;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+        
+        .instructions {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+        
+        .alphabet-display {
+            font-size: 20px;
+            letter-spacing: 4px;
+            margin: 30px 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            font-family: Arial, sans-serif;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            line-height: 1.8;
+        }
+        
+        .alphabet-display.hidden {
+            opacity: 1;
+        }
+        
+        .alphabet-display.hidden .letter.typed {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .alphabet-display.hidden .letter.current {
+            opacity: 0;
+            visibility: hidden;
+        }
+        
+        .alphabet-display.hidden .letter.pending {
+            opacity: 0;
+            visibility: hidden;
+        }
+        
+        .letter {
+            display: inline-block;
+            margin: 0 2px;
+        }
+        
+        .letter.typed {
+            color: #28a745;
+            font-weight: bold;
+        }
+        
+        .letter.current {
+            color: #007bff;
+            font-weight: bold;
+            text-decoration: underline;
+            animation: pulse 1s infinite;
+        }
+        
+        .letter.pending {
+            color: #ccc;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .timer {
+            font-size: 48px;
+            font-weight: bold;
+            color: #667eea;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .timer.running {
+            color: #28a745;
+        }
+        
+        .timer.finished {
+            color: #ffc107;
+        }
+        
+        .status {
+            font-size: 18px;
+            color: #666;
+            margin: 15px 0;
+            min-height: 30px;
+        }
+        
+        .error-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: transparent;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: fadeIn 0.2s;
+            pointer-events: none;
+        }
+        
+        .error-overlay.show {
+            display: flex;
+        }
+        
+        .error-x {
+            font-size: 200px;
+            color: #dc3545;
+            font-weight: bold;
+            animation: shake 0.5s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-20px); }
+            75% { transform: translateX(20px); }
+        }
+        
+        .reset-btn {
+            background-color: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background-color 0.3s;
+        }
+        
+        .reset-btn:hover {
+            background-color: #5568d3;
+        }
+        
+        .stats {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .stats h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            font-size: 16px;
+        }
+        
+        .stat-label {
+            color: #666;
+        }
+        
+        .stat-value {
+            color: #333;
+            font-weight: bold;
+        }
+        
+        .completion-message {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-size: 18px;
+            font-weight: bold;
+            display: none;
+        }
+        
+        .completion-message.show {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+        
+        .options {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .option label {
+            color: #333;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        
+        .option input[type="checkbox"] {
+            cursor: pointer;
+            width: 18px;
+            height: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-overlay" id="errorOverlay">
+        <div class="error-x">✗</div>
+    </div>
+    
+    <div class="container">
+        <h1>⌨️ Alphabet Typing Practice</h1>
+        <p class="instructions">Type the alphabet from A to Z as quickly as you can!</p>
+        
+        <div class="options">
+            <div class="option">
+                <input type="checkbox" id="hideAlphabet" onchange="toggleAlphabetVisibility()">
+                <label for="hideAlphabet">Hide alphabet (memory mode)</label>
+            </div>
+            <div class="option">
+                <input type="checkbox" id="lowercase" onchange="toggleCase()">
+                <label for="lowercase">Show lowercase</label>
+            </div>
+        </div>
+        
+        <div class="alphabet-display" id="alphabetDisplay"></div>
+        
+        <div class="timer" id="timer">0.00</div>
+        <div class="status" id="status">Press any key to start...</div>
+        
+        <div class="completion-message" id="completionMessage">
+            🎉 Congratulations! You've completed the alphabet!
+        </div>
+        
+        <button class="reset-btn" onclick="resetGame()">Reset</button>
+        
+        <div class="stats" id="stats" style="display: none;">
+            <h3>Your Stats</h3>
+            <div class="stat-item">
+                <span class="stat-label">Time:</span>
+                <span class="stat-value" id="finalTime">-</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Errors:</span>
+                <span class="stat-value" id="errorCount">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Letters per second:</span>
+                <span class="stat-value" id="speed">-</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+        let currentIndex = 0;
+        let startTime = null;
+        let timerInterval = null;
+        let errors = 0;
+        let isComplete = false;
+        let isLowercase = false;
+        
+        function initializeDisplay() {
+            const display = document.getElementById('alphabetDisplay');
+            display.innerHTML = alphabet.map((letter, index) => {
+                let className = 'letter ';
+                if (index === 0) {
+                    className += 'current';
+                } else {
+                    className += 'pending';
+                }
+                const displayLetter = isLowercase ? letter.toLowerCase() : letter;
+                return `<span class="${className}" id="letter-${index}">${displayLetter}</span>`;
+            }).join('');
+        }
+        
+        function updateDisplay() {
+            alphabet.forEach((letter, index) => {
+                const letterElement = document.getElementById(`letter-${index}`);
+                letterElement.className = 'letter ';
+                
+                if (index < currentIndex) {
+                    letterElement.className += 'typed';
+                } else if (index === currentIndex) {
+                    letterElement.className += 'current';
+                } else {
+                    letterElement.className += 'pending';
+                }
+                
+                const displayLetter = isLowercase ? letter.toLowerCase() : letter;
+                letterElement.textContent = displayLetter;
+            });
+        }
+        
+        function toggleAlphabetVisibility() {
+            const display = document.getElementById('alphabetDisplay');
+            const checkbox = document.getElementById('hideAlphabet');
+            
+            if (checkbox.checked) {
+                display.className = 'alphabet-display hidden';
+            } else {
+                display.className = 'alphabet-display';
+            }
+        }
+        
+        function toggleCase() {
+            const checkbox = document.getElementById('lowercase');
+            isLowercase = checkbox.checked;
+            updateDisplay();
+        }
+        
+        function startTimer() {
+            startTime = Date.now();
+            document.getElementById('timer').className = 'timer running';
+            document.getElementById('status').textContent = 'Keep going...';
+            
+            timerInterval = setInterval(() => {
+                const elapsed = (Date.now() - startTime) / 1000;
+                document.getElementById('timer').textContent = elapsed.toFixed(2);
+            }, 10);
+        }
+        
+        function stopTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            document.getElementById('timer').className = 'timer finished';
+        }
+        
+        function showError() {
+            const overlay = document.getElementById('errorOverlay');
+            overlay.className = 'error-overlay show';
+            
+            setTimeout(() => {
+                overlay.className = 'error-overlay';
+            }, 500);
+            
+            errors++;
+        }
+        
+        function completeGame() {
+            isComplete = true;
+            stopTimer();
+            
+            const finalTime = ((Date.now() - startTime) / 1000).toFixed(2);
+            const speed = (26 / finalTime).toFixed(2);
+            
+            document.getElementById('status').textContent = 'Completed! 🎉';
+            document.getElementById('completionMessage').className = 'completion-message show';
+            document.getElementById('finalTime').textContent = finalTime + 's';
+            document.getElementById('errorCount').textContent = errors;
+            document.getElementById('speed').textContent = speed;
+            document.getElementById('stats').style.display = 'block';
+        }
+        
+        function resetGame() {
+            currentIndex = 0;
+            startTime = null;
+            errors = 0;
+            isComplete = false;
+            
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            
+            document.getElementById('timer').textContent = '0.00';
+            document.getElementById('timer').className = 'timer';
+            document.getElementById('status').textContent = 'Press any key to start...';
+            document.getElementById('completionMessage').className = 'completion-message';
+            document.getElementById('stats').style.display = 'none';
+            
+            initializeDisplay();
+        }
+        
+        document.addEventListener('keydown', (event) => {
+            if (isComplete) return;
+            
+            // Ignore special keys
+            if (event.key.length > 1) return;
+            
+            const pressedKey = event.key.toUpperCase();
+            const expectedKey = alphabet[currentIndex];
+            
+            // Start timer on first key press
+            if (currentIndex === 0 && startTime === null) {
+                startTimer();
+            }
+            
+            if (pressedKey === expectedKey) {
+                // Correct key pressed
+                currentIndex++;
+                updateDisplay();
+                
+                // Check if completed
+                if (currentIndex === alphabet.length) {
+                    completeGame();
+                }
+            } else {
+                // Wrong key pressed
+                showError();
+            }
+        });
+        
+        // Initialize the game
+        initializeDisplay();
+    </script>
+</body>
+</html>
